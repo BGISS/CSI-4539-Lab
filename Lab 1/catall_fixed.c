@@ -5,6 +5,7 @@
 #include <string.h>
 #include <errno.h>
 #include <assert.h>
+#include <fcntl.h>
 
 int main(int argc, char *argv[])
 {
@@ -12,6 +13,9 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Usage: %s <file>\n", argv[0]);
         return 1;
     }
+
+    int fd = open(argv[1], O_RDONLY);
+    int open_errno = errno;
 
     uid_t ruid, euid, suid;
     getresuid(&ruid, &euid, &suid);
@@ -31,9 +35,20 @@ int main(int argc, char *argv[])
     fprintf(stderr, "[T8] setuid(0) re-elevation attempt failed as expected: %s\n",
             strerror(errno));
 
+    if (fd < 0) {
+        fprintf(stderr, "open: %s\n", strerror(open_errno));
+        return 1;
+    }
+
+    if (dup2(fd, STDIN_FILENO) < 0) {
+        perror("dup2");
+        return 1;
+    }
+    close(fd);
     char *path = "/bin/cat";
     assert(path[0] == '/');
-    char *safe_argv[] = { path, argv[1], NULL };
+    char *safe_argv[] = { path, NULL };
+
     char *safe_envp[] = { "PATH=/usr/bin:/bin", "IFS= \t\n", NULL };
 
     execve(path, safe_argv, safe_envp);
