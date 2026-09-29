@@ -1,5 +1,6 @@
 #!/bin/bash
 
+echo "T2 : trace acl"
 SHARED=/home/shared_devteam
 BIN=./target_tool
 
