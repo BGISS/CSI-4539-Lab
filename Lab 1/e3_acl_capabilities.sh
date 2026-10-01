@@ -1,9 +1,4 @@
 #!/bin/bash
-# Partie 1: accorde a carol (hors du groupe devteam) un acces precis
-#           en lecture seule au repertoire partage, via une ACL.
-# Partie 2: remplace un binaire Set-UID root par un binaire ne portant
-#           qu'une seule capacite POSIX ciblee (cap_net_raw), pour
-#           illustrer la reduction de surface d'attaque.
 set -e
 
 SHARED=/home/shared_devteam
@@ -14,11 +9,6 @@ setfacl -m u:carol:r-x "$SHARED"
 echo "ACL sur $SHARED"
 getfacl "$SHARED"
 
-# --- Partie 2 : capacites POSIX ---
-# On suppose l'existence d'un binaire compile localement, ex: ping-like tool,
-# qui a besoin de cap_net_raw (ouvrir une socket brute) et de rien d'autre.
-# A adapter au binaire reellement utilise dans votre depot (ex: myenv, ou un
-# outil de sondage reseau fourni pour ce laboratoire).
 BIN=./target_tool
 
 if [ -f "$BIN" ]; then
