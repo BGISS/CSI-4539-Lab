@@ -1,0 +1,3 @@
+project Stack_Ada is
+   for Main use ("stack_ada.adb");
+end Stack_Ada;
