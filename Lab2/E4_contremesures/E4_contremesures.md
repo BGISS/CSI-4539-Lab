@@ -14,18 +14,18 @@ Les quatre contre-mesures etudiees dans ce laboratoire n'agissent pas au
 meme endroit de la chaine d'exploitation (E1 -> E3). Le tableau suivant
 situe chacune par rapport aux etapes de l'attaque de la partie A :
 
-| Etape de l'attaque (E1-E3) | Contre-mesure qui l'affecte |
-|---|---|
-| `strcpy()` copie le payload dans `buffer` (le debordement lui-meme) | Aucune des quatre ne l'empeche - c'est la limite commune a toutes |
-| Le payload ecrase l'adresse de retour | StackGuard (detecte la corruption adjacente, le canari) |
-| `ret` saute dans le NOP sled puis dans le shellcode | ASLR (rend l'adresse `ret` incorrecte la plupart du temps) |
-| Le CPU execute les octets du shellcode | Pile non executable / NX (empeche l'execution, meme si le saut reussit) |
-| Le shellcode invoque `/bin/sh` | Protection de dash (fait tomber le privilege avant que le shell ne s'execute) |
+| Etape de l'attaque (E1-E3)                                          | Contre-mesure qui l'affecte                                                   |
+| ------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `strcpy()` copie le payload dans `buffer` (le debordement lui-meme) | Aucune des quatre ne l'empeche - c'est la limite commune a toutes             |
+| Le payload ecrase l'adresse de retour                               | StackGuard (detecte la corruption adjacente, le canari)                       |
+| `ret` saute dans le NOP sled puis dans le shellcode                 | ASLR (rend l'adresse `ret` incorrecte la plupart du temps)                    |
+| Le CPU execute les octets du shellcode                              | Pile non executable / NX (empeche l'execution, meme si le saut reussit)       |
+| Le shellcode invoque `/bin/sh`                                      | Protection de dash (fait tomber le privilege avant que le shell ne s'execute) |
 
 Cette repartition est la cle de l'analyse : **aucune contre-mesure ne
 corrige la cause premiere** (`strcpy()` sans verification de longueur,
 ecrite comme hypothese non verifiee - voir E8). Chacune bloque seulement
-*une consequence particuliere* du debordement, ce qui explique pourquoi
+_une consequence particuliere_ du debordement, ce qui explique pourquoi
 chacune a un contournement specifique plutot qu'universel.
 
 ---
@@ -45,7 +45,7 @@ debordement reussit techniquement (le shellcode s'execute bel et bien),
 mais le shell obtenu n'a plus les droits root.
 
 **Limite / contournement (E4, `dash/`).** La protection de dash ne
-verifie les UID *qu'une seule fois, a son propre demarrage*. Si le
+verifie les UID _qu'une seule fois, a son propre demarrage_. Si le
 processus a deja egalise `uid_reel = uid_effectif = 0` **avant** que dash
 ne soit lance, la verification de dash ne trouve plus rien a corriger.
 C'est exactement ce que fait l'appel systeme `setuid(0)`, ajoute **au
@@ -71,17 +71,6 @@ shellcode avec et sans le prefixe `setuid(0)`, compile comme binaire
 root Set-UID (`make setuid` dans `Labsetup/shellcode/`). C'est la demande
 explicite du PDF (section 9, "Experiment") - isoler l'effet de
 `setuid(0)` du reste de l'attaque.
-
-### Resultats (E4, T4)
-
-```
-[A COMPLETER] - a32_nosetuid.out, id :
-[A COMPLETER] - a32_setuid.out, id :
-[A COMPLETER] - exploit_L1_dash.py + stack-L1, id :
-[A COMPLETER] - ls -l /bin/sh /bin/zsh /bin/dash :
-```
-
----
 
 ## 2. ASLR (Task 8)
 
@@ -111,16 +100,6 @@ pile sur 64 bits est bien plus grande, rendant la meme approche de force
 brute impraticable en temps raisonnable. C'est une limite reelle du
 contournement, pas seulement de la contre-mesure.
 
-### Resultats (E4, T4)
-
-```
-[A COMPLETER] - une seule execution avec ASLR actif (echec attendu) :
-[A COMPLETER] - sortie de brute-force.sh (nombre d'essais, temps ecoule,
-                 id confirmant root) :
-```
-
----
-
 ## 3. StackGuard / canari de pile (Task 9.a)
 
 **Mecanisme.** Avec `-fstack-protector` (actif par defaut depuis gcc
@@ -137,12 +116,12 @@ prologue, et une comparaison + `call __stack_chk_fail` juste avant
 
 **Ce qu'elle bloque.** Notre debordement (E3) ecrit bien au-dela de
 `buffer` pour atteindre l'adresse de retour - il ecrase donc
-*necessairement* aussi le canari, qui se trouve entre les deux. La
+_necessairement_ aussi le canari, qui se trouve entre les deux. La
 verification juste avant `ret` detecte cette corruption et appelle
 `__stack_chk_fail`, qui termine le programme **avant** que l'adresse de
 retour corrompue ne soit jamais utilisee.
 
-**Limite.** Le canari ne detecte que les debordements qui *traversent*
+**Limite.** Le canari ne detecte que les debordements qui _traversent_
 son emplacement sur la pile - un debordement cible (par exemple qui
 n'ecrirait que dans une autre variable locale sans jamais atteindre le
 canari ni l'adresse de retour) ne serait pas detecte. Dans notre cas
@@ -151,17 +130,6 @@ le canari est traverse a chaque tentative et l'attaque de la partie A
 echoue systematiquement contre ce binaire, sans contournement simple
 demande dans ce laboratoire (un contournement existerait - fuite prealable
 de la valeur du canari - mais sort du cadre de E4).
-
-### Resultats (E4, T4)
-
-```
-[A COMPLETER] - stack_base (controle, sans canari) + id :
-[A COMPLETER] - stack_canary (meme badfile) + id :
-                attendu : "*** stack smashing detected ***: terminated"
-                suivi de "Aborted", aucun shell obtenu
-```
-
----
 
 ## 4. Pile non executable / NX (Task 9.b)
 
@@ -183,38 +151,18 @@ l'adresse `ret` ou de la presence du shellcode.
 
 **Limite / pourquoi retour-to-libc existe.** Le PDF le signale (section
 9.b, "Defeating the non-executable stack countermeasure") : NX n'empeche
-que l'*execution de code injecte sur la pile* - il n'empeche pas le
-debordement lui-meme, ni la reutilisation de code *deja executable*
+que l'_execution de code injecte sur la pile_ - il n'empeche pas le
+debordement lui-meme, ni la reutilisation de code _deja executable_
 ailleurs en memoire (bibliotheque C deja chargee, par exemple). C'est
 exactement la logique de l'attaque return-to-libc (E5, hors du perimetre
 reduit de notre travail actuel E1-E3/E6/E9, mais couverte par le PDF
 "Return-to-libc Attack Lab").
 
-### Resultats (E4, T4)
-
-```
-[A COMPLETER] - stack_noexec + badfile de stack_base/exploit_L1.py :
-                attendu : Segmentation fault (PAS de message de detection
-                explicite, contrairement au canari)
-[A COMPLETER] - readelf -l stack_base   | grep -A1 GNU_STACK  (RWE)
-[A COMPLETER] - readelf -l stack_noexec | grep -A1 GNU_STACK  (RW)
-```
-
----
-
 ## Synthese - pourquoi l'attaque de la partie A echoue sous chaque contre-mesure
 
-| Contre-mesure | Etape bloquee | Mecanisme de l'echec | Contournement demontre |
-|---|---|---|---|
-| Protection de dash | Apres l'execution du shellcode | Le shell abandonne le privilege root a son demarrage | `setuid(0)` prefixe au shellcode, avant `execve()` |
-| ASLR | Avant meme que `ret` ne s'execute | L'adresse fixe de `ret` ne correspond plus au vrai layout de pile | Force brute (19 bits d'entropie sur 32 bits, impraticable sur 64 bits) |
-| StackGuard | Juste avant `ret` | Le canari, ecrase par le meme debordement qui ecrase l'adresse de retour, est detecte et `__stack_chk_fail` avorte le programme | Aucun demande dans ce laboratoire (necessiterait une fuite du canari) |
-| Pile non executable (NX) | Au moment de l'execution du shellcode | La page de la pile est marquee non executable au niveau materiel, independamment du succes du saut | Aucun demande ici (couvert par return-to-libc, E5) |
-
-Point commun aux quatre : **aucune ne corrige `strcpy(buffer, str)`
-elle-meme**. Le debordement a toujours lieu ; chaque contre-mesure
-intervient a une etape *posterieure* au debordement. C'est precisement
-l'argument central de la partie D de ce laboratoire (E7) : seule une
-verification de longueur **avant** la copie - via un sous-type contraint
-en Ada, par exemple - empeche le debordement de se produire du tout,
-plutot que d'en detecter ou d'en limiter les consequences apres coup.
+| Contre-mesure            | Etape bloquee                         | Mecanisme de l'echec                                                                                                            | Contournement demontre                                                 |
+| ------------------------ | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Protection de dash       | Apres l'execution du shellcode        | Le shell abandonne le privilege root a son demarrage                                                                            | `setuid(0)` prefixe au shellcode, avant `execve()`                     |
+| ASLR                     | Avant meme que `ret` ne s'execute     | L'adresse fixe de `ret` ne correspond plus au vrai layout de pile                                                               | Force brute (19 bits d'entropie sur 32 bits, impraticable sur 64 bits) |
+| StackGuard               | Juste avant `ret`                     | Le canari, ecrase par le meme debordement qui ecrase l'adresse de retour, est detecte et `__stack_chk_fail` avorte le programme | Aucun demande dans ce laboratoire (necessiterait une fuite du canari)  |
+| Pile non executable (NX) | Au moment de l'execution du shellcode | La page de la pile est marquee non executable au niveau materiel, independamment du succes du saut                              | Aucun demande ici (couvert par return-to-libc, E5)                     |
